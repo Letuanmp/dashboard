@@ -7,7 +7,7 @@
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <meta name="description" content="">
     <meta name="author" content="">
-    <title>Hoàn tiền giao dịch</title>
+    <title>Tra cứu giao dịch</title>
     <!-- Bootstrap core CSS -->
     <link href="/vnpay_php/assets/bootstrap.min.css" rel="stylesheet" />
     <!-- Custom styles for this template -->
@@ -21,36 +21,22 @@
             <h3 class="text-muted">VNPAY DEMO</h3>
         </div>
         <div style="width: 100%;padding-top:0px;font-weight: bold;color: #333333">
-            <h3>Refund</h3>
+            <h3>Querydr</h3>
         </div>
         <div style="width: 100% ;border-bottom: 2px solid black;padding-bottom: 20px">
-            <form action="/vnpay_php/vnpay_refund.php" id="frmCreateOrder" method="post">
+            <form action="/vnpay_php/vnpay_querydr.php" id="frmCreateOrder" method="post">
                 <div class="form-group">
-                    <label>Mã GD thanh toán cần hoàn (vnp_TxnRef):</label>
-                    <input class="form-control" data-val="true" name="TxnRef" type="text" value="" />
-                </div>
-                <div class="form-group">
-                    <label>Kiểu hoàn tiền (vnp_TransactionType):</label>
-                    <select name="TransactionType" id="trantype" class="form-control">
-                        <option value="02">Hoàn tiền toàn phần</option>
-                        <option value="03">Hoàn tiền một phần</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="amount">Số tiền hoàn:</label>
-                    <input class="form-control" max="100000000" min="1" name="Amount" type="number" value="" />
+                    <label>Mã GD thanh toán cần quy vấn (vnp_TxnRef):</label>
+                    <input class="form-control" data-val="true" name="txnRef" type="text" value="" />
                 </div>
                 <div class="form-group">
                     <label>Thời gian khởi tạo GD thanh toán (vnp_TransactionDate):</label>
-                    <input class="form-control" data-val="true" name="TransactionDate" type="text" placeholder="yyyyMMddHHmmss" value="" />
+                    <input class="form-control" data-val="true" name="transactionDate" type="text" placeholder="yyyyMMddHHmmss" value="" />
                 </div>
-                <div class="form-group">
-                    <label>User khởi tạo hoàn (vnp_CreateBy):</label>
-                    <input class="form-control" data-val="true" name="CreateBy" type="text" value="" />
-                </div>
-                <input type="submit" class="btn btn-default" value="Refund" />
+                <input type="submit" class="btn btn-default" value="Querydr" />
             </form>
         </div>
+
         <?php
         date_default_timezone_set('Asia/Ho_Chi_Minh');
         error_reporting(E_ALL & E_NOTICE & E_DEPRECATED);
@@ -91,62 +77,53 @@
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $vnp_RequestId = rand(1,10000); // Mã truy vấn
-            $vnp_Command = "refund"; // Mã api
-            $vnp_TransactionType = $_POST["TransactionType"]; // 02 hoàn trả toàn phần - 03 hoàn trả một phần
-            $vnp_TxnRef = $_POST["TxnRef"]; // Mã tham chiếu của giao dịch
-            $vnp_Amount = $_POST["Amount"] * 100; // Số tiền hoàn trả
-            $vnp_OrderInfo = "Hoan Tien Giao Dich"; // Mô tả thông tin
-            $vnp_TransactionNo = "0"; // Tuỳ chọn, "0": giả sử merchant không ghi nhận được mã GD do VNPAY phản hồi.
-            $vnp_TransactionDate = $_POST["TransactionDate"]; // Thời gian ghi nhận giao dịch
+            $vnp_Command = "querydr"; // Mã api
+            $vnp_TxnRef = $_POST["txnRef"]; // Mã tham chiếu của giao dịch
+            $vnp_OrderInfo = "Query transaction"; // Mô tả thông tin
+            //$vnp_TransactionNo= ; // Tuỳ chọn, Mã giao dịch thanh toán của CTT VNPAY
+            $vnp_TransactionDate = $_POST["transactionDate"]; // Thời gian ghi nhận giao dịch
             $vnp_CreateDate = date('YmdHis'); // Thời gian phát sinh request
-            $vnp_CreateBy = $_POST["CreateBy"]; // Người khởi tạo hoàn tiền
             $vnp_IpAddr = $_SERVER['REMOTE_ADDR']; // Địa chỉ IP của máy chủ thực hiện gọi API
 
-            $ispTxnRequest = array(
+
+            $datarq = array(
                 "vnp_RequestId" => $vnp_RequestId,
-                "vnp_Version" => "2.1.0",
+                "vnp_Version" => "2.1.0", 
                 "vnp_Command" => $vnp_Command,
                 "vnp_TmnCode" => $vnp_TmnCode,
-                "vnp_TransactionType" => $vnp_TransactionType,
                 "vnp_TxnRef" => $vnp_TxnRef,
-                "vnp_Amount" => $vnp_Amount,
                 "vnp_OrderInfo" => $vnp_OrderInfo,
-                "vnp_TransactionNo" => $vnp_TransactionNo,
+                //$vnp_TransactionNo= ; 
                 "vnp_TransactionDate" => $vnp_TransactionDate,
                 "vnp_CreateDate" => $vnp_CreateDate,
-                "vnp_CreateBy" => $vnp_CreateBy,
                 "vnp_IpAddr" => $vnp_IpAddr
             );
 
-            $format = '%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s';
+            $format = '%s|%s|%s|%s|%s|%s|%s|%s|%s';
 
             $dataHash = sprintf(
                 $format,
-                $ispTxnRequest['vnp_RequestId'], //1
-                $ispTxnRequest['vnp_Version'], //2
-                $ispTxnRequest['vnp_Command'], //3
-                $ispTxnRequest['vnp_TmnCode'], //4
-                $ispTxnRequest['vnp_TransactionType'], //5
-                $ispTxnRequest['vnp_TxnRef'], //6
-                $ispTxnRequest['vnp_Amount'], //7
-                $ispTxnRequest['vnp_TransactionNo'],  //8
-                $ispTxnRequest['vnp_TransactionDate'], //9
-                $ispTxnRequest['vnp_CreateBy'], //10
-                $ispTxnRequest['vnp_CreateDate'], //11
-                $ispTxnRequest['vnp_IpAddr'], //12
-                $ispTxnRequest['vnp_OrderInfo'] //13
+                $datarq['vnp_RequestId'], //1
+                $datarq['vnp_Version'], //2
+                $datarq['vnp_Command'], //3
+                $datarq['vnp_TmnCode'], //4
+                $datarq['vnp_TxnRef'], //5
+                $datarq['vnp_TransactionDate'], //6
+                $datarq['vnp_CreateDate'], //7
+                $datarq['vnp_IpAddr'], //8
+                $datarq['vnp_OrderInfo']//9
             ); 
 
             $checksum = hash_hmac('SHA512', $dataHash, $vnp_HashSecret);
-            $ispTxnRequest["vnp_SecureHash"] = $checksum;
-            $txnData = callAPI_auth("POST", $apiUrl, json_encode($ispTxnRequest));
+            $datarq["vnp_SecureHash"] = $checksum;
+            $txnData = callAPI_auth("POST", $apiUrl, json_encode($datarq));
             $ispTxn = json_decode($txnData, true);
 
             echo "
             <div>
-            <pre>
             <label>API Response:</label>
-            <code class='language-html' data-lang='html'>$txnData</code>
+            <pre>
+            $txnData
             </pre>
             </div>";
         }
